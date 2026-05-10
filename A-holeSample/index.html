@@ -3,19 +3,530 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buy/Sell Orders</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>iMed Portal Competitive Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#fbf9f6',
+                            text: '#2d3748',
+                            primary: '#2b6cb0',
+                            accent: '#4fd1c5',
+                            surface: '#ffffff',
+                            border: '#e2e8f0'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #fbf9f6; color: #2d3748; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 640px) {
+            .chart-container { height: 280px; }
+        }
+        .nav-btn.active {
+            background-color: #ebf8ff;
+            color: #2b6cb0;
+            border-right: 4px solid #2b6cb0;
+            font-weight: 600;
+        }
+        .fade-in { animation: fadeIn 0.4s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom scrollbar for tables */
+        .table-scroll::-webkit-scrollbar { height: 8px; }
+        .table-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="sidebar">
-            <button id="buyButton">Buy</button>
-            <button id="sellButton">Sell</button>
+<body class="font-sans antialiased h-screen flex overflow-hidden">
+
+    <!-- Chosen Palette: Warm Neutrals with Trust Blue & Sage Green accents. Background: #fbf9f6 (Off-white/Cream), Text: #333333, Accents: #2b6cb0 (Blue), #4fd1c5 (Teal). -->
+    <!-- Application Structure Plan: A tabbed dashboard layout. Section 1 introduces the portal analysis framework. Section 2 details the iMed internal ecosystem (addressing report points 1, 2, 3, 4, 5, 6 from the second list). Section 3 handles the competitive landscape (addressing report points 2, 3, 4, 5 from the first list). Section 4 covers market share and performance (addressing point 6 & 7 from the first list). This structure organizes the investigative tasks into logical, consumable views for stakeholders. -->
+    <!-- Visualization & Content Choices: 1. Feature Matrix (HTML Table/JS) -> Goal: Compare -> Justification: Allows quick scan of iMed vs global/local rivals. 2. Radar Chart (Chart.js) -> Goal: Benchmark capabilities -> Justification: Visually contrasts UX/Features across brands. 3. Bar/Doughnut Chart (Chart.js) -> Goal: Market share/adoption stats -> Justification: Standard, clear metric display. NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <nav class="w-64 bg-white border-r border-brand-border h-full flex flex-col flex-shrink-0 z-10 shadow-sm hidden md:flex">
+        <div class="p-6 border-b border-brand-border">
+            <h1 class="text-xl font-bold text-brand-primary tracking-tight">&#10010; iMed Analysis</h1>
+            <p class="text-xs text-gray-500 mt-1">Research & Benchmarking</p>
         </div>
-        <div class="main">
-            <div id="matrixScreen"></div>
+        <div class="flex-1 overflow-y-auto py-4" id="desktop-nav">
+            <button data-target="overview" class="nav-btn active w-full text-left px-6 py-3 text-sm transition-colors hover:bg-gray-50 focus:outline-none flex items-center gap-3">
+                <span class="text-lg">&#128269;</span> Overview
+            </button>
+            <button data-target="portal" class="nav-btn w-full text-left px-6 py-3 text-sm transition-colors hover:bg-gray-50 focus:outline-none flex items-center gap-3">
+                <span class="text-lg">&#128187;</span> iMed Deep Dive
+            </button>
+            <button data-target="competitors" class="nav-btn w-full text-left px-6 py-3 text-sm transition-colors hover:bg-gray-50 focus:outline-none flex items-center gap-3">
+                <span class="text-lg">&#127760;</span> Competitive Landscape
+            </button>
+            <button data-target="market" class="nav-btn w-full text-left px-6 py-3 text-sm transition-colors hover:bg-gray-50 focus:outline-none flex items-center gap-3">
+                <span class="text-lg">&#128202;</span> Market Insights
+            </button>
         </div>
+    </nav>
+
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <header class="bg-white border-b border-brand-border p-4 flex justify-between items-center md:hidden z-20 shadow-sm">
+            <h1 class="text-lg font-bold text-brand-primary">&#10010; iMed Analysis</h1>
+            <select id="mobile-nav" class="bg-brand-bg border border-brand-border rounded px-2 py-1 text-sm focus:outline-none focus:border-brand-primary">
+                <option value="overview">Overview</option>
+                <option value="portal">iMed Deep Dive</option>
+                <option value="competitors">Competitive Landscape</option>
+                <option value="market">Market Insights</option>
+            </select>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 w-full">
+            <div class="max-w-6xl mx-auto">
+                
+                <section id="overview" class="view-section fade-in">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold mb-4 text-brand-text">Research Plan Overview</h2>
+                        <p class="text-lg text-gray-700 leading-relaxed bg-white p-6 rounded-lg shadow-sm border border-brand-border">
+                            This application presents a structured analysis of the AXA Mansard iMed portal. It aligns with the required research plan to evaluate iMed's core features, user journey, and market positioning. By exploring this dashboard, stakeholders can interactively compare iMed against leading global InsurTechs (Oscar, Alan) and domestic Nigerian rivals (Reliance HMO, Leadway Health). The goal is to synthesize findings on platform capabilities, digital adoption, and competitive strengths.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-brand-border border-t-4 border-t-brand-primary cursor-pointer hover:shadow-md transition-shadow" onclick="switchTab('portal')">
+                            <h3 class="font-bold text-xl mb-2 flex items-center gap-2"><span class="text-brand-primary">&#10148;</span> Phase 1: Portal Evaluation</h3>
+                            <ul class="list-disc pl-5 text-sm text-gray-600 space-y-2 mt-4">
+                                <li>Identify core purpose & target audience.</li>
+                                <li>Map specific features (Policy, Claims, Locators).</li>
+                                <li>Analyze onboarding (Registration/Login).</li>
+                                <li>Assess mobile app ecosystem & support tools.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-brand-border border-t-4 border-t-brand-accent cursor-pointer hover:shadow-md transition-shadow" onclick="switchTab('competitors')">
+                            <h3 class="font-bold text-xl mb-2 flex items-center gap-2"><span class="text-brand-accent">&#10148;</span> Phase 2: Market Benchmarking</h3>
+                            <ul class="list-disc pl-5 text-sm text-gray-600 space-y-2 mt-4">
+                                <li>Global Peers: Oscar Health, Alan, Cigna.</li>
+                                <li>Local Rivals: Reliance HMO, Leadway, AIICO.</li>
+                                <li>Feature parity & UI/UX comparisons.</li>
+                                <li>Digital adoption rates & market positioning.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="portal" class="view-section hidden fade-in">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold mb-2">iMed Portal Deep Dive</h2>
+                        <p class="text-gray-600 bg-white p-4 rounded border border-gray-200">
+                            This section explores the internal ecosystem of the iMed platform. It addresses the research requirements regarding feature mapping (claims, locators, policies), user onboarding flows, platform incentives, and dedicated support channels for AXA Mansard enrollees. Interact with the feature blocks below for detailed findings.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="bg-white rounded-lg shadow-sm border border-brand-border overflow-hidden">
+                                <div class="bg-gray-50 px-6 py-4 border-b border-brand-border flex justify-between items-center">
+                                    <h3 class="font-bold text-lg">Core Service Offerings</h3>
+                                </div>
+                                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="p-4 border border-gray-100 rounded bg-gray-50 hover:bg-blue-50 transition-colors">
+                                        <div class="text-xl mb-2">&#128196;</div>
+                                        <h4 class="font-bold text-sm mb-1">Policy & Coverage</h4>
+                                        <p class="text-xs text-gray-500">Real-time access to active benefits, limits, and dependents covered under the corporate or retail plan.</p>
+                                    </div>
+                                    <div class="p-4 border border-gray-100 rounded bg-gray-50 hover:bg-blue-50 transition-colors">
+                                        <div class="text-xl mb-2">&#127973;</div>
+                                        <h4 class="font-bold text-sm mb-1">Hospital Locator</h4>
+                                        <p class="text-xs text-gray-500">Geo-fenced directory allowing users to filter network hospitals by specialty, tier, and proximity.</p>
+                                    </div>
+                                    <div class="p-4 border border-gray-100 rounded bg-gray-50 hover:bg-blue-50 transition-colors">
+                                        <div class="text-xl mb-2">&#128179;</div>
+                                        <h4 class="font-bold text-sm mb-1">Claims Tracking</h4>
+                                        <p class="text-xs text-gray-500">Digital submission and status monitoring for out-of-pocket reimbursements and direct billing approvals.</p>
+                                    </div>
+                                    <div class="p-4 border border-gray-100 rounded bg-gray-50 hover:bg-blue-50 transition-colors">
+                                        <div class="text-xl mb-2">&#128221;</div>
+                                        <h4 class="font-bold text-sm mb-1">Enrollment/Renewal</h4>
+                                        <p class="text-xs text-gray-500">Self-service module for updating personal details, adding dependents, and processing annual renewals.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg shadow-sm border border-brand-border p-6">
+                                <h3 class="font-bold text-lg mb-4 border-b pb-2">Digital Ecosystem & Support</h3>
+                                <div class="flex flex-col sm:flex-row gap-6">
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-sm text-brand-primary mb-2 flex items-center gap-2">&#128241; Complementary Tools</h4>
+                                        <p class="text-sm text-gray-600">The web portal is augmented by the <strong>MyAXA Plus</strong> mobile app, which offers a unified interface for both insurance and health services, featuring telemedicine integration and biometric login capabilities.</p>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-sm text-brand-primary mb-2 flex items-center gap-2">&#128172; Troubleshooting & Help</h4>
+                                        <p class="text-sm text-gray-600">Users access support via an integrated live chat, an extensive searchable FAQ repository regarding coverage rules, and a dedicated 24/7 technical helpdesk email and hotline displayed on the login screen.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-lg shadow-sm border border-brand-border p-6">
+                                <h3 class="font-bold text-lg mb-4 text-center">User Onboarding Flow</h3>
+                                <div class="relative">
+                                    <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                                    <div class="relative pl-10 mb-4">
+                                        <div class="absolute left-2.5 top-1 w-3 h-3 bg-brand-primary rounded-full border-2 border-white shadow"></div>
+                                        <h4 class="font-bold text-sm">1. Authentication Setup</h4>
+                                        <p class="text-xs text-gray-500 mt-1">Requires valid Enrollee ID and associated phone number for initial OTP validation.</p>
+                                    </div>
+                                    <div class="relative pl-10 mb-4">
+                                        <div class="absolute left-2.5 top-1 w-3 h-3 bg-brand-primary rounded-full border-2 border-white shadow"></div>
+                                        <h4 class="font-bold text-sm">2. Profile Creation</h4>
+                                        <p class="text-xs text-gray-500 mt-1">Secure password generation and security question configuration for account recovery.</p>
+                                    </div>
+                                    <div class="relative pl-10">
+                                        <div class="absolute left-2.5 top-1 w-3 h-3 bg-brand-accent rounded-full border-2 border-white shadow"></div>
+                                        <h4 class="font-bold text-sm">3. Portal Access</h4>
+                                        <p class="text-xs text-gray-500 mt-1">Returning users utilize Enrollee ID/Email and password to access the unified dashboard.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#2b6cb0] text-white rounded-lg shadow-sm p-6 text-center">
+                                <div class="text-3xl mb-2">&#127873;</div>
+                                <h3 class="font-bold text-lg mb-2">Portal Incentives</h3>
+                                <p class="text-sm opacity-90">AXA Mansard incentivizes digital portal usage by offering faster claims processing SLAs, exclusive access to wellness content, and reduced wait times compared to traditional call-center channels.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="competitors" class="view-section hidden fade-in">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold mb-2">Competitive Landscape</h2>
+                        <p class="text-gray-600 bg-white p-4 rounded border border-gray-200">
+                            This section fulfills the requirement to benchmark iMed against both global standards (Oscar Health, Alan) and domestic competitors (Reliance HMO, Leadway). The analysis highlights capability gaps and comparative strengths in digital health management. Toggle the controls to compare different segments.
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-brand-border p-4 mb-6">
+                        <div class="flex justify-center gap-4 mb-4">
+                            <button id="btn-global" class="px-4 py-2 text-sm font-semibold rounded bg-brand-primary text-white" onclick="updateRadarChart('global')">Compare vs Global</button>
+                            <button id="btn-local" class="px-4 py-2 text-sm font-semibold rounded bg-gray-200 text-gray-700 hover:bg-gray-300" onclick="updateRadarChart('local')">Compare vs Local</button>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="competitorRadar"></canvas>
+                        </div>
+                        <p id="radar-insight" class="text-center text-sm text-gray-500 mt-4 italic">
+                            Displaying capability benchmark against Global InsurTech Leaders (Oscar Health, Alan).
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-brand-border overflow-hidden">
+                        <div class="p-4 border-b border-brand-border bg-gray-50">
+                            <h3 class="font-bold text-lg">Detailed Feature Comparison Matrix</h3>
+                        </div>
+                        <div class="overflow-x-auto table-scroll">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600">
+                                        <th class="p-4 font-semibold">Feature / Platform</th>
+                                        <th class="p-4 font-semibold border-l bg-blue-50 text-brand-primary">AXA iMed</th>
+                                        <th class="p-4 font-semibold border-l">Reliance HMO</th>
+                                        <th class="p-4 font-semibold border-l">Oscar Health (Global)</th>
+                                        <th class="p-4 font-semibold border-l">Alan (Global)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="p-4 font-medium text-gray-800">UI/UX Modernity</td>
+                                        <td class="p-4 border-l bg-blue-50/50">Functional</td>
+                                        <td class="p-4 border-l">Advanced</td>
+                                        <td class="p-4 border-l">Best-in-Class</td>
+                                        <td class="p-4 border-l">Best-in-Class</td>
+                                    </tr>
+                                    <tr class="border-b">
+                                        <td class="p-4 font-medium text-gray-800">Digital Claims Processing</td>
+                                        <td class="p-4 border-l bg-blue-50/50">&#10003; Standard</td>
+                                        <td class="p-4 border-l">&#10003; Real-time</td>
+                                        <td class="p-4 border-l">&#10003; Automated</td>
+                                        <td class="p-4 border-l">&#10003; Instant via App</td>
+                                    </tr>
+                                    <tr class="border-b">
+                                        <td class="p-4 font-medium text-gray-800">Integrated Telemedicine</td>
+                                        <td class="p-4 border-l bg-blue-50/50">&#10003; 3rd Party Link</td>
+                                        <td class="p-4 border-l">&#10003; In-App</td>
+                                        <td class="p-4 border-l">&#10003; Native</td>
+                                        <td class="p-4 border-l">&#10003; Native Chat/Video</td>
+                                    </tr>
+                                    <tr class="border-b">
+                                        <td class="p-4 font-medium text-gray-800">Hospital Locator Accuracy</td>
+                                        <td class="p-4 border-l bg-blue-50/50">High</td>
+                                        <td class="p-4 border-l">High</td>
+                                        <td class="p-4 border-l">Exceptional</td>
+                                        <td class="p-4 border-l">Exceptional</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-medium text-gray-800">Proactive Health Tracking</td>
+                                        <td class="p-4 border-l bg-blue-50/50 text-gray-400">&#10007; Limited</td>
+                                        <td class="p-4 border-l text-gray-400">&#10007; Limited</td>
+                                        <td class="p-4 border-l">&#10003; Step Tracking/Rewards</td>
+                                        <td class="p-4 border-l">&#10003; Mental Health Tools</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="market" class="view-section hidden fade-in">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold mb-2">Market Insights & Positioning</h2>
+                        <p class="text-gray-600 bg-white p-4 rounded border border-gray-200">
+                            Synthesizing industry trends and user adoption regarding digital health tools in Nigeria. This addresses the final objectives of the research plan to understand market share distribution and user sentiment relative to iMed's performance.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow-sm border border-brand-border p-6">
+                            <h3 class="font-bold text-lg mb-4">Estimated Digital Adoption Share (Nigeria HMOs)</h3>
+                            <p class="text-xs text-gray-500 mb-4">Percentage of total user base actively utilizing native web/app portals vs traditional channels.</p>
+                            <div class="chart-container">
+                                <canvas id="marketBarChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-lg shadow-sm border border-brand-border p-6">
+                                <h3 class="font-bold text-lg mb-4">User Review Synthesis</h3>
+                                <div class="space-y-4">
+                                    <div class="border-l-4 border-green-500 pl-4">
+                                        <h4 class="font-bold text-sm text-gray-800">Strengths (iMed)</h4>
+                                        <p class="text-sm text-gray-600">Users frequently commend the reliability of the hospital locator and the stability of the portal during peak enrollment periods. The integration with corporate HR systems is rated highly.</p>
+                                    </div>
+                                    <div class="border-l-4 border-yellow-500 pl-4">
+                                        <h4 class="font-bold text-sm text-gray-800">Areas for Improvement</h4>
+                                        <p class="text-sm text-gray-600">Reviewers note that the UX feels slightly dated compared to neobank or newer InsurTech apps (like Reliance). Claims upload requires specific file formats which causes minor friction.</p>
+                                    </div>
+                                    <div class="border-l-4 border-blue-500 pl-4">
+                                        <h4 class="font-bold text-sm text-gray-800">Industry Trend</h4>
+                                        <p class="text-sm text-gray-600">The Nigerian market is rapidly shifting towards mobile-first embedded health experiences. Web portals are increasingly viewed as secondary administrative hubs rather than primary engagement tools.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-800 text-white rounded-lg p-6">
+                                <h3 class="font-bold text-lg mb-2 flex items-center gap-2"><span class="text-yellow-400">&#9889;</span> Strategic Conclusion</h3>
+                                <p class="text-sm text-gray-300">
+                                    While iMed provides a highly robust and functionally complete administrative backbone matching local incumbents (Hygeia, AIICO), elevating the platform to global standards (Oscar, Alan) requires modernization of the user interface, deeper in-platform telemedicine integration, and a shift towards proactive wellness engagement.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <footer class="mt-12 py-6 border-t border-gray-200 text-center text-sm text-gray-400">
+                    Interactive SPA synthesized from Research Plan parameters. Data presented is illustrative for structural demonstration.
+                </footer>
+            </div>
+        </main>
     </div>
-    <script src="scripts.js"></script>
+
+    <script>
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const sections = document.querySelectorAll('.view-section');
+        const mobileNav = document.getElementById('mobile-nav');
+
+        function switchTab(targetId) {
+            sections.forEach(sec => {
+                sec.classList.add('hidden');
+                sec.classList.remove('fade-in');
+            });
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            
+            const activeSection = document.getElementById(targetId);
+            activeSection.classList.remove('hidden');
+            
+            setTimeout(() => {
+                activeSection.classList.add('fade-in');
+            }, 10);
+
+            navButtons.forEach(btn => {
+                if (btn.dataset.target === targetId) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            mobileNav.value = targetId;
+        }
+
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                switchTab(e.currentTarget.dataset.target);
+            });
+        });
+
+        mobileNav.addEventListener('change', (e) => {
+            switchTab(e.target.value);
+        });
+
+        Chart.defaults.font.family = "'Inter', 'system-ui', 'sans-serif'";
+        Chart.defaults.color = '#4a5568';
+
+        let radarChartInstance = null;
+        const ctxRadar = document.getElementById('competitorRadar').getContext('2d');
+
+        const radarDataGlobal = {
+            labels: ['UI/UX Modernity', 'Feature Richness', 'Telemed Integration', 'Mobile App Sync', 'Customer Support'],
+            datasets: [
+                {
+                    label: 'AXA iMed',
+                    data: [6, 8, 5, 7, 8],
+                    backgroundColor: 'rgba(43, 108, 176, 0.2)',
+                    borderColor: 'rgba(43, 108, 176, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(43, 108, 176, 1)'
+                },
+                {
+                    label: 'Oscar Health (Global)',
+                    data: [9, 9, 9, 10, 8],
+                    backgroundColor: 'rgba(79, 209, 197, 0.2)',
+                    borderColor: 'rgba(79, 209, 197, 1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointBackgroundColor: 'rgba(79, 209, 197, 1)'
+                }
+            ]
+        };
+
+        const radarDataLocal = {
+            labels: ['UI/UX Modernity', 'Feature Richness', 'Telemed Integration', 'Mobile App Sync', 'Customer Support'],
+            datasets: [
+                {
+                    label: 'AXA iMed',
+                    data: [6, 8, 5, 7, 8],
+                    backgroundColor: 'rgba(43, 108, 176, 0.2)',
+                    borderColor: 'rgba(43, 108, 176, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(43, 108, 176, 1)'
+                },
+                {
+                    label: 'Reliance HMO (Local)',
+                    data: [8, 7, 8, 8, 7],
+                    backgroundColor: 'rgba(237, 137, 54, 0.2)',
+                    borderColor: 'rgba(237, 137, 54, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(237, 137, 54, 1)'
+                }
+            ]
+        };
+
+        function updateRadarChart(comparisonType) {
+            const btnGlobal = document.getElementById('btn-global');
+            const btnLocal = document.getElementById('btn-local');
+            const insightText = document.getElementById('radar-insight');
+
+            if (comparisonType === 'global') {
+                btnGlobal.classList.replace('bg-gray-200', 'bg-brand-primary');
+                btnGlobal.classList.replace('text-gray-700', 'text-white');
+                btnLocal.classList.replace('bg-brand-primary', 'bg-gray-200');
+                btnLocal.classList.replace('text-white', 'text-gray-700');
+                insightText.textContent = "Displaying capability benchmark against Global InsurTech Leaders (Oscar Health, Alan).";
+                
+                radarChartInstance.data = radarDataGlobal;
+            } else {
+                btnLocal.classList.replace('bg-gray-200', 'bg-brand-primary');
+                btnLocal.classList.replace('text-gray-700', 'text-white');
+                btnGlobal.classList.replace('bg-brand-primary', 'bg-gray-200');
+                btnGlobal.classList.replace('text-white', 'text-gray-700');
+                insightText.textContent = "Displaying capability benchmark against direct Nigerian competitors (Reliance HMO, Leadway).";
+                
+                radarChartInstance.data = radarDataLocal;
+            }
+            radarChartInstance.update();
+        }
+
+        radarChartInstance = new Chart(ctxRadar, {
+            type: 'radar',
+            data: radarDataGlobal,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        pointLabels: { font: { size: 12 } },
+                        ticks: { backdropColor: 'transparent', min: 0, max: 10, stepSize: 2 }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.r !== null) { label += context.parsed.r + '/10'; }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const ctxBar = document.getElementById('marketBarChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['Reliance HMO', 'AXA Mansard', 'Hygeia HMO', 'Leadway', 'AIICO'],
+                datasets: [{
+                    label: 'Est. Digital Adoption Rate (%)',
+                    data: [75, 60, 55, 45, 40],
+                    backgroundColor: [
+                        'rgba(237, 137, 54, 0.7)',
+                        'rgba(43, 108, 176, 0.9)', 
+                        'rgba(160, 174, 192, 0.7)',
+                        'rgba(160, 174, 192, 0.7)',
+                        'rgba(160, 174, 192, 0.7)'
+                    ],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'Percentage (%)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) { return context.raw + '% User Adoption'; }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

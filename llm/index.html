@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSN x BCT LLM Agent Challenge</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --card-bg: #ffffff;
+            --primary-color: #0056b3;
+            --text-color: #333;
+            --border-radius: 8px;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .task-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+        .result-box {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            min-height: 50px;
+            white-space: pre-wrap;
+        }
+        .loader {
+            display: none;
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>DSN x BCT LLM Agent Challenge</h1>
+
+    <div class="task-container">
+        <h2>Task A: User Modeling</h2>
+        <p>Simulate star ratings and written reviews for unseen items[cite: 21].</p>
+        
+        <form id="taskA-form">
+            <label for="personaA">User Persona:</label>
+            <textarea id="personaA" rows="3" placeholder="e.g., A 30-year-old fitness enthusiast who values high-intensity training..." required></textarea>
+
+            <label for="productDetails">Product Details:</label>
+            <textarea id="productDetails" rows="3" placeholder="e.g., A new pair of lightweight carbon-plated running shoes..." required></textarea>
+
+            <button type="submit">Generate Review & Rating</button>
+        </form>
+
+        <div id="loaderA" class="loader">Processing via OpenClaw...</div>
+        <div id="resultA" class="result-box">Result will appear here...</div>
+    </div>
+
+    <div class="task-container">
+        <h2>Task B: Recommendation</h2>
+        <p>Rank and recommend items tailored to individual user context[cite: 21].</p>
+        
+        <form id="taskB-form">
+            <label for="personaB">User Persona:</label>
+            <textarea id="personaB" rows="3" placeholder="e.g., A software developer looking for sci-fi and action media recommendations..." required></textarea>
+
+            <button type="submit">Get Recommendations</button>
+        </form>
+
+        <div id="loaderB" class="loader">Processing via OpenClaw...</div>
+        <div id="resultB" class="result-box">Result will appear here...</div>
+    </div>
+
+    <script>
+        // Update this to your actual API subdomain once configured
+        const API_BASE_URL = "https://api.yourcustomdomain.com/api";
+
+        // Task A Submission
+        document.getElementById('taskA-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const persona = document.getElementById('personaA').value;
+            const product = document.getElementById('productDetails').value;
+            const resultBox = document.getElementById('resultA');
+            const loader = document.getElementById('loaderA');
+
+            resultBox.textContent = "";
+            loader.style.display = "block";
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/modeling/simulate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ persona: persona, productDetails: product })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                
+                const data = await response.json();
+                resultBox.textContent = `Rating: ${data.rating} Stars\nReview: ${data.review}`;
+            } catch (error) {
+                resultBox.textContent = `Error: ${error.message}`;
+            } finally {
+                loader.style.display = "none";
+            }
+        });
+
+        // Task B Submission
+        document.getElementById('taskB-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const persona = document.getElementById('personaB').value;
+            const resultBox = document.getElementById('resultB');
+            const loader = document.getElementById('loaderB');
+
+            resultBox.textContent = "";
+            loader.style.display = "block";
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/recommendation/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ persona: persona })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                
+                const data = await response.json();
+                // Assuming API returns an array of recommended items
+                resultBox.textContent = data.recommendations.map((item, index) => `${index + 1}. ${item}`).join('\n');
+            } catch (error) {
+                resultBox.textContent = `Error: ${error.message}`;
+            } finally {
+                loader.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
